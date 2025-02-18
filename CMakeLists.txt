@@ -12,6 +12,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB IMGUI_SOURCES thirdparty/imgui/*.cpp)
 message("ImGui Sources files: ${IMGUI_SOURCES}")
 
+add_subdirectory(thirdparty/spdlog)
+
 #  创建可执行文件
 add_executable(${PROJECT_NAME}
     main.cpp
@@ -39,4 +41,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     GL
+
+    #  链接 spdlog
+    spdlog::spdlog_header_only
 )
