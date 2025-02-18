@@ -1,104 +1,81 @@
-#include <boost/asio.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/exception/exception.hpp>
-#include <spdlog/spdlog.h>
-#include <nlohmann/json.hpp>
-#include <fstream>
-#include <stdexcept>
-#include <iostream>
-#include <print>
+//  ImGui 头文件
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
-using json = nlohmann::json;
-namespace asio = boost::asio;
+//  GLFW 头文件
+#include <GLFW/glfw3.h>
 
-int main()
-{
-    std::ifstream config_json_fstream{ "config.json" };
+//  spdlog 头文件
+#include "spdlog/spdlog.h"
 
-    if (!config_json_fstream)
-    {
-        spdlog::info("Config file missing, trying to create one");
-    }
-    else
-    {
-        spdlog::info("Config file found");
+static void glfw_error_callback(int error, const char* description) {
+    spdlog::error("glfw error occurred! error code: {}, description: {}", error, description);
+    std::terminate();
+}
+
+int main() {
+    glfwSetErrorCallback(glfw_error_callback);  // 设置 GLFW 错误回调函数
+    if (!glfwInit()) {
+        spdlog::error("glfw initialization failed!");
+        return -1;
     }
 
-    json config_json = json::parse(config_json_fstream);
+    //  创建 GLFW 窗口
+    GLFWwindow* window = glfwCreateWindow(800, 600, "ImGui Demo", nullptr, nullptr);
+    if (!window) {
+        spdlog::error("glfw window creation failed!");
+        return -1;
+    }
 
-    //  从文件内读取 server 的 ip, port, username
-    auto address_string = config_json["server ip"].get<std::string>();
-    auto port_string = config_json["port"].get<std::string>();
-    auto username = config_json["username"].get<std::string>();
+    //  窗口上下文
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);  //  设置垂直同步
     
-    //  如果 Server ip 与 Port 任意一栏为空, 则抛出异常
-    if (address_string.empty())
-    {
-        spdlog::critical("Server ip cannot be null !");
-        throw std::logic_error{"Server ip adress read from config is null !"};
-    }
+    //  初始化 ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  //  启用键盘导航
 
-    if (port_string.empty())
-    {
-        spdlog::critical("Server port cannot be null !");
-        throw std::logic_error{"Server port read from config is null"};
-    }
+    //  设置 ImGui backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
 
-    if (username.empty())
-    {
-        spdlog::critical("User name cannot be null !");
-        throw std::logic_error{"Username read from config is null"};
-    }
+    //  设置 ImGui 默认风格
+    ImGui::StyleColorsDark();
+    
+    while (!glfwWindowShouldClose(window)) {
+        //  发布事件
+        glfwPollEvents();
 
-    //  将 Server ip 转换成 ip::address
-    auto address = asio::ip::address::from_string(address_string);    
+        //  新帧开始
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-    //  将 Port String 转换成数字
-    std::uint_least16_t port{};
-    std::from_chars(port_string.data(), port_string.data() + port_string.size(), port);
-
-    //  定义 Socket
-    asio::io_context io_context{};
-    asio::ip::tcp::socket socket{ io_context };
-
-    //  要连接到的目标 Server
-    asio::ip::tcp::endpoint endpoint{address, port};
-
-    //  连接到服务器
-    socket.connect(endpoint);
-    spdlog::info("Trying to connect to server: {}:{}", endpoint.address().to_string(), endpoint.port());
-
-
-    if (socket.is_open())
-        spdlog::info("Successfully connected, Username: {}", username);
-    else
-    {
-        spdlog::critical("Connect failed !");
-        throw std::logic_error{"Cannot connect to the server"};
-    }
-
-    //  接收信息的缓冲区 buffer
-    constexpr std::size_t buffer_size{ 4096 };
-    std::array<unsigned char, buffer_size> buffer{};
-
-    while (true)
-    {
-        std::print("{} >> ", username);
-        std::string message{};
-        std::getline(std::cin, message);
-
-        if (message == "/exit")
-        {
-            socket.close();
-            break;
+        if (ImGui::Begin("Hello world window")) {
+            ImGui::Text("Hello world!");
+            ImGui::End();
         }
-        else if (message.empty())
-            continue;
-        
-        socket.write_some(asio::buffer(message));
 
-        auto read_length = socket.read_some(asio::buffer(buffer));
-        std::string read_message{buffer.begin(), buffer.begin() + read_length};
-        std::println("{} >> {}", username, read_message);
+        // 渲染
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
     }
+
+    //  资源清理
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }
