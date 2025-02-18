@@ -15,7 +15,10 @@ static void glfw_error_callback(int error, const char* description) {
 }
 
 int main() {
-    glfwSetErrorCallback(glfw_error_callback);  // 设置 GLFW 错误回调函数
+    //  设置 GLFW 错误回调函数
+    glfwSetErrorCallback(glfw_error_callback);
+
+    //  初始化 GLFW
     if (!glfwInit()) {
         spdlog::error("glfw initialization failed!");
         return -1;
@@ -54,8 +57,29 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        if (ImGui::Begin("Hello world window")) {
-            ImGui::Text("Hello world!");
+        if (ImGui::Begin("Chatroom client login")) {
+            ImGui::Text("Username:");
+            ImGui::SameLine();
+            static char username[128] = "";
+            ImGui::InputText("##username", username, IM_ARRAYSIZE(username));
+
+            ImGui::Text("Password:");
+            ImGui::SameLine();
+            static char password[128] = "";
+            ImGui::InputText("##password", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password);
+
+            std::string error_message{};
+
+            if (ImGui::Button("Login")) {
+                spdlog::info("login with username: {}, password: {}", username, password);
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Register")) {
+                spdlog::info("register with username: {}, password: {}", username, password);
+            }
+
             ImGui::End();
         }
 
