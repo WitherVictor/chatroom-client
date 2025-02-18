@@ -1,32 +1,42 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(chatroom-client VERSION 0.1.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.18)
+project(chatroom-client)
 
-find_package(Boost REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(fmt REQUIRED)
-find_package(nlohmann_json REQUIRED)
+#  设置 C++ 标准为 23 并启用标准要求模式
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-std=c++23)
-add_executable(chatroom-client main.cpp)
+#  导出编译指令供 clangd 使用
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# std::print() Windows 下依赖头文件
-# target_link_libraries(chatroom-client PRIVATE stdc++exp)
+#  查找 ImGui 的源文件
+file(GLOB IMGUI_SOURCES thirdparty/imgui/*.cpp)
+message("ImGui Sources files: ${IMGUI_SOURCES}")
 
-# 引入 Boost
-include_directories(${Boost_INCLUDE_DIRS})
-target_link_libraries(chatroom-client ${Boost_LIBRARIES})
+#  创建可执行文件
+add_executable(${PROJECT_NAME}
+    main.cpp
+    ${IMGUI_SOURCES}
 
-# 引入 spdlog
-target_link_libraries(chatroom-client PRIVATE spdlog::spdlog_header_only)
+    #  使用 glfw 与 opengl 作为 ImGui 的后端
+    thirdparty/imgui/backends/imgui_impl_glfw.cpp
+    thirdparty/imgui/backends/imgui_impl_opengl3.cpp
+)
 
-# Boost.asio Windows 下依赖库
-target_link_libraries(chatroom-client PRIVATE ws2_32)
+#  启用警告
+target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wall
+    -Wextra
+    -pedantic
+)
 
-# spdlog 依赖库 fmt
-target_link_libraries(chatroom-client PRIVATE fmt::fmt-header-only)
+#  包含 ImGui 头文件
+target_include_directories(${PROJECT_NAME} PRIVATE
+    thirdparty/imgui
+    thirdparty/imgui/backends
+)
 
-# nlohmann json
-target_link_libraries(chatroom-client PRIVATE nlohmann_json::nlohmann_json)
-
-# print 依赖库
-target_link_libraries(chatroom-client PRIVATE stdc++exp)
+#  链接 backends 的依赖库 glfw 与 opengl
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    glfw
+    GL
+)
