@@ -1,5 +1,7 @@
 //  ImGui 头文件
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
@@ -60,15 +62,15 @@ int main() {
         if (ImGui::Begin("Chatroom client login")) {
             ImGui::Text("Username:");
             ImGui::SameLine();
-            static char username[128] = "";
-            ImGui::InputText("##username", username, IM_ARRAYSIZE(username));
+            static std::string username{};
+            ImGui::InputText("##username", &username);
 
             ImGui::Text("Password:");
             ImGui::SameLine();
-            static char password[128] = "";
-            ImGui::InputText("##password", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password);
+            static std::string password{};
+            ImGui::InputText("##password", &password, ImGuiInputTextFlags_Password);
 
-            std::string error_message{};
+            static std::string error_message{};
 
             if (ImGui::Button("Login")) {
                 spdlog::info("login with username: {}, password: {}", username, password);

@@ -22,6 +22,9 @@ add_executable(${PROJECT_NAME}
     #  使用 glfw 与 opengl 作为 ImGui 的后端
     thirdparty/imgui/backends/imgui_impl_glfw.cpp
     thirdparty/imgui/backends/imgui_impl_opengl3.cpp
+
+    #  ImGui::InputText 对 std::string 支持
+    thirdparty/imgui/misc/cpp/imgui_stdlib.cpp
 )
 
 #  启用警告
