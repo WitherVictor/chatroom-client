@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 
+//  ImGui 后端渲染文件
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
@@ -42,6 +43,7 @@ int main() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  //  启用键盘导航
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      //  启用窗口停靠
 
     //  设置 ImGui backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
