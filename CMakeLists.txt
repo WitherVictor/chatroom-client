@@ -34,24 +34,46 @@ FetchContent_Declare(
 #  下载并编译所有依赖
 FetchContent_MakeAvailable(BoostAsio fmt spdlog nlohmann_json)
 
-add_compile_options(-std=c++23)
-add_executable(chatroom-client main.cpp)
+#  导出编译指令供 clangd 使用
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# std::print() Windows 下依赖头文件
-# target_link_libraries(chatroom-client PRIVATE stdc++exp)
+#  查找 ImGui 的源文件
+file(GLOB IMGUI_SOURCES thirdparty/imgui/*.cpp)
+message("ImGui Sources files: ${IMGUI_SOURCES}")
 
-# 引入 Boost
-include_directories(${Boost_INCLUDE_DIRS})
-target_link_libraries(chatroom-client ${Boost_LIBRARIES})
+add_subdirectory(thirdparty/spdlog)
 
-# 引入 spdlog
-target_link_libraries(chatroom-client PRIVATE spdlog::spdlog_header_only)
+#  创建可执行文件
+add_executable(${PROJECT_NAME}
+    main.cpp
+    ${IMGUI_SOURCES}
 
-# Boost.asio Windows 下依赖库
-target_link_libraries(chatroom-client PRIVATE ws2_32)
+    #  使用 glfw 与 opengl 作为 ImGui 的后端
+    thirdparty/imgui/backends/imgui_impl_glfw.cpp
+    thirdparty/imgui/backends/imgui_impl_opengl3.cpp
 
-# spdlog 依赖库 fmt
-target_link_libraries(chatroom-client PRIVATE fmt::fmt-header-only)
+    #  ImGui::InputText 对 std::string 支持
+    thirdparty/imgui/misc/cpp/imgui_stdlib.cpp
+)
 
-# nlohmann json
-target_link_libraries(chatroom-client PRIVATE nlohmann_json::nlohmann_json)
+#  启用警告
+target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wall
+    -Wextra
+    -pedantic
+)
+
+#  包含 ImGui 头文件
+target_include_directories(${PROJECT_NAME} PRIVATE
+    thirdparty/imgui
+    thirdparty/imgui/backends
+)
+
+#  链接 backends 的依赖库 glfw 与 opengl
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    glfw
+    GL
+
+    #  链接 spdlog
+    spdlog::spdlog_header_only
+)
